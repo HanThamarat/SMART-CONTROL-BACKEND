@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  server:
+    restart: always
+    platform: linux/x86_64
+    build:
+      context: ./
+      dockerfile: ${DOCKERFILE:-Dockerfile.dev}
+    ports:
+      - 3000:3000
+    command: "air -c .air.toml"
+    networks:
+      - smart-control-network
+    volumes:
+      - ./:/app
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      postgreSql:
+        condition: service_healthy
+
+  postgreSql:
+    restart: always
+    platform: linux/x86_64
+    image: postgres:18-alpine3.22
+    ports:
+      - 5432:5432
+    volumes:
+      - database_volume:/var/lib/postgresql
+    environment:
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=root
+      - POSTGRES_DB=smartcontrol
+    networks:
+      - smart-control-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5    
+
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    restart: always
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mqtt_volume.config:/mosquitto/config
+      - mqtt_volume.data:/mosquitto/data
+      - mqtt_volume.log:/mosquitto/log
+    networks:
+      - smart-control-network
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -E -i healthcheck -p 1883 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+networks:
+  smart-control-network:
+    driver: bridge
+
+volumes:
+  mqtt_volume.config:
+  mqtt_volume.data:
+  mqtt_volume.log:
+  database_volume:

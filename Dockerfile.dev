@@ -1,0 +1,36 @@
+# Base image: Ubuntu
+FROM ubuntu:22.04
+
+# Set non-interactive mode
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and install prerequisites
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    build-essential
+
+# Install Go (Using 1.24.0 - stable)
+ENV GO_VERSION=1.24.0
+RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz && \
+    tar -xzf go${GO_VERSION}.linux-amd64.tar.gz -C /usr/local && \
+    rm go${GO_VERSION}.linux-amd64.tar.gz
+
+# ADD BOTH Go AND the Go Bin folder to your PATH
+ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin
+
+# Now install air (it will go into /root/go/bin)
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+EXPOSE 3000
+
+# Start with air
+CMD ["/root/go/bin/air", "-c", ".air.toml"]

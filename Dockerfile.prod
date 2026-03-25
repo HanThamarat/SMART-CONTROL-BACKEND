@@ -1,0 +1,27 @@
+# Stage 1: Build
+FROM golang:1.25.5-bookworm AS builder
+
+WORKDIR /app
+
+# Copy and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+
+# Stage 2: Run
+FROM alpine:3.19
+
+WORKDIR /app
+
+# Copy binary and config
+COPY --from=builder /app/main .
+
+ENV PORT=3000
+EXPOSE 3000
+
+CMD ["./main"]
