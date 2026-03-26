@@ -7,7 +7,10 @@ require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.5.1 // indirect
+	github.com/fasthttp/websocket v1.5.12 // indirect
 	github.com/gofiber/contrib/jwt v1.1.2 // indirect
+	github.com/gofiber/contrib/socketio v1.1.6 // indirect
+	github.com/gofiber/contrib/websocket v1.3.4 // indirect
 	github.com/gofiber/fiber/v2 v2.52.12 // indirect
 	github.com/gofiber/jwt/v3 v3.3.10 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
@@ -26,6 +29,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.21 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/savsgio/gotils v0.0.0-20250924091648-bce9a52d7761 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.69.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
