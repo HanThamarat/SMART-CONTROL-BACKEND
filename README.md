@@ -155,3 +155,72 @@ Remove containers and volumes:
 ```bash
 docker compose down -v
 ```
+
+## GitHub Actions CI/CD 🚀
+
+This repository now includes a GitHub Actions workflow at `.github/workflows/ci-cd.yml`.
+
+What it does:
+
+- Runs CI on `pull_request`, `main`, and `master`
+- Checks Go formatting with `gofmt`
+- Runs `go test ./...`
+- Deploys to your Ubuntu server on pushes to `main` or `master`
+
+### Deployment flow
+
+The deploy job:
+
+- connects to your Ubuntu server over SSH
+- syncs the repository to your server
+- writes a production `.env` file from a GitHub Secret
+- runs `docker compose -f docker-compose.prod.yaml up -d --build`
+
+### Required GitHub Secrets
+
+Add these in `GitHub -> Settings -> Secrets and variables -> Actions`:
+
+- `SERVER_HOST` = your Ubuntu server IP or domain
+- `SERVER_PORT` = your SSH port, usually `22`
+- `SERVER_USER` = the Linux user used for deployment
+- `SERVER_SSH_KEY` = the private SSH key used by GitHub Actions
+- `SERVER_APP_DIR` = target app directory on the server, for example `/home/ubuntu/apps/smart-control-backend`
+- `ENV_FILE` = the full content of your production `.env`
+
+Example `ENV_FILE` secret:
+
+```env
+Port=:3000
+SERVER_MODE=false
+JWT_SECRET=change-me
+
+DATABASE_HOST=postgreSql
+DATABASE_USERNAME=root
+DATABASE_PASSWORD=root
+DATABASE_NAME=smartcontrol
+DATABASE_PORT=5432
+
+MQTT_BROKER=mosquitto:1883
+MQTT_CLIENT_ID=smart-control-backend
+MQTT_USERNAME=smartcontrol
+MQTT_PASSWORD=123456
+
+EMAIL=admin@example.com
+NAME=Admin
+USERNAME=admin
+PASSWORD=strong-password
+```
+
+### Ubuntu server requirements
+
+Your server should already have:
+
+- Docker installed
+- Docker Compose plugin installed
+- the deploy user able to run `docker compose`
+
+Manual first-time setup example:
+
+```bash
+mkdir -p /home/ubuntu/apps/smart-control-backend
+```
