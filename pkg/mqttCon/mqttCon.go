@@ -9,6 +9,10 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+type Publisher struct {
+	client mqtt.Client
+}
+
 func MqttConnection() mqtt.Client {
 
 	// setting client option connection to mqtt broker.
@@ -33,4 +37,19 @@ func MqttConnection() mqtt.Client {
 	fmt.Println("✅ MQTT Broker connected.")
 
 	return client
+}
+
+func NewPublisher(client mqtt.Client) *Publisher {
+	return &Publisher{client: client}
+}
+
+func (p *Publisher) Publish(topic string, qos byte, retained bool, payload interface{}) error {
+	if p == nil || p.client == nil {
+		return fmt.Errorf("mqtt client is not configured")
+	}
+
+	token := p.client.Publish(topic, qos, retained, payload)
+	token.Wait()
+
+	return token.Error()
 }

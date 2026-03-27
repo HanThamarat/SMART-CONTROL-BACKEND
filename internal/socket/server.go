@@ -21,14 +21,26 @@ import (
 )
 
 type Server struct {
-	mu      sync.RWMutex
-	clients map[string]map[string]struct{}
+	mu            sync.RWMutex
+	clients       map[string]map[string]struct{}
+	mqttPublisher MQTTPublisher
 }
 
 type IncomingMessage struct {
 	Event string          `json:"event"`
 	To    string          `json:"to,omitempty"`
 	Data  json.RawMessage `json:"data,omitempty"`
+}
+
+type MQTTPublisher interface {
+	Publish(topic string, qos byte, retained bool, payload interface{}) error
+}
+
+type MQTTPublishRequest struct {
+	Topic    string          `json:"topic"`
+	Payload  json.RawMessage `json:"payload"`
+	QoS      byte            `json:"qos,omitempty"`
+	Retained bool            `json:"retained,omitempty"`
 }
 
 type OutgoingMessage struct {
@@ -50,6 +62,41 @@ func NewServer() *Server {
 	server.registerEvents()
 
 	return server
+}
+
+func (s *Server) SetMQTTPublisher(publisher MQTTPublisher) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.mqttPublisher = publisher
+}
+
+func (s *Server) BroadcastMQTTMessage(topic string, payload []byte) {
+	if strings.TrimSpace(topic) == "" {
+		return
+	}
+
+	data, err := json.Marshal(map[string]interface{}{
+		"topic":   topic,
+		"payload": mqttSocketPayload(payload),
+	})
+	if err != nil {
+		log.Printf("socket mqtt broadcast marshal error topic=%s err=%v", topic, err)
+		return
+	}
+
+	message, err := json.Marshal(OutgoingMessage{
+		Event:     "mqtt:message",
+		Message:   "MQTT message received.",
+		Timestamp: now(),
+		Data:      data,
+	})
+	if err != nil {
+		log.Printf("socket mqtt envelope marshal error topic=%s err=%v", topic, err)
+		return
+	}
+
+	fibersocket.Broadcast(message, fibersocket.TextMessage)
 }
 
 func (s *Server) Upgrade(c *fiber.Ctx) error {
@@ -149,6 +196,11 @@ func (s *Server) handleMessage(ep *fibersocket.EventPayload) {
 		incoming.Event = "message"
 	}
 
+	if incoming.Event == "mqtt:publish" {
+		s.handleMQTTPublish(ep, clientID, incoming.Data)
+		return
+	}
+
 	outgoing := OutgoingMessage{
 		Event:     incoming.Event,
 		From:      clientID,
@@ -205,6 +257,88 @@ func (s *Server) handleMessage(ep *fibersocket.EventPayload) {
 		ClientID:  clientID,
 		SocketID:  ep.Kws.UUID,
 		Timestamp: now(),
+	})
+}
+
+func (s *Server) handleMQTTPublish(ep *fibersocket.EventPayload, clientID string, data json.RawMessage) {
+	publisher := s.getMQTTPublisher()
+	if publisher == nil {
+		s.emit(ep.Kws, OutgoingMessage{
+			Event:     "socket:error",
+			Message:   "MQTT publisher is not configured.",
+			ClientID:  clientID,
+			SocketID:  ep.Kws.UUID,
+			Timestamp: now(),
+		})
+		return
+	}
+
+	var req MQTTPublishRequest
+	if err := json.Unmarshal(data, &req); err != nil {
+		s.emit(ep.Kws, OutgoingMessage{
+			Event:     "socket:error",
+			Message:   "Invalid mqtt:publish payload. Expected topic and payload.",
+			ClientID:  clientID,
+			SocketID:  ep.Kws.UUID,
+			Timestamp: now(),
+		})
+		return
+	}
+
+	req.Topic = strings.TrimSpace(req.Topic)
+	if req.Topic == "" || len(req.Payload) == 0 {
+		s.emit(ep.Kws, OutgoingMessage{
+			Event:     "socket:error",
+			Message:   "MQTT topic and payload are required.",
+			ClientID:  clientID,
+			SocketID:  ep.Kws.UUID,
+			Timestamp: now(),
+		})
+		return
+	}
+
+	payload, err := mqttPayloadBytes(req.Payload)
+	if err != nil {
+		s.emit(ep.Kws, OutgoingMessage{
+			Event:     "socket:error",
+			Message:   "Unable to serialize MQTT payload.",
+			ClientID:  clientID,
+			SocketID:  ep.Kws.UUID,
+			Timestamp: now(),
+		})
+		return
+	}
+
+	if err := publisher.Publish(req.Topic, req.QoS, req.Retained, payload); err != nil {
+		log.Printf("socket mqtt publish error client_id=%s topic=%s err=%v", clientID, req.Topic, err)
+		s.emit(ep.Kws, OutgoingMessage{
+			Event:     "socket:error",
+			Message:   "MQTT publish failed.",
+			ClientID:  clientID,
+			SocketID:  ep.Kws.UUID,
+			Timestamp: now(),
+			To:        req.Topic,
+		})
+		return
+	}
+
+	ackData, err := json.Marshal(map[string]interface{}{
+		"topic":    req.Topic,
+		"qos":      req.QoS,
+		"retained": req.Retained,
+	})
+	if err != nil {
+		log.Printf("socket mqtt ack marshal error client_id=%s topic=%s err=%v", clientID, req.Topic, err)
+		ackData = nil
+	}
+
+	s.emit(ep.Kws, OutgoingMessage{
+		Event:     "mqtt:published",
+		Message:   "MQTT message published.",
+		ClientID:  clientID,
+		SocketID:  ep.Kws.UUID,
+		Timestamp: now(),
+		Data:      ackData,
 	})
 }
 
@@ -311,6 +445,13 @@ func (s *Server) getClientSockets(clientID string) []string {
 	}
 
 	return result
+}
+
+func (s *Server) getMQTTPublisher() MQTTPublisher {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.mqttPublisher
 }
 
 func now() string {
@@ -456,4 +597,25 @@ func claimString(claims jwt.MapClaims, key string) string {
 	default:
 		return strings.TrimSpace(fmt.Sprint(v))
 	}
+}
+
+func mqttPayloadBytes(raw json.RawMessage) ([]byte, error) {
+	var textPayload string
+	if err := json.Unmarshal(raw, &textPayload); err == nil {
+		return []byte(textPayload), nil
+	}
+
+	if !json.Valid(raw) {
+		return nil, errors.New("invalid JSON payload")
+	}
+
+	return []byte(raw), nil
+}
+
+func mqttSocketPayload(payload []byte) interface{} {
+	if json.Valid(payload) {
+		return json.RawMessage(payload)
+	}
+
+	return string(payload)
 }

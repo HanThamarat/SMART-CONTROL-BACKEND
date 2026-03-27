@@ -1,12 +1,12 @@
 package main
 
 import (
-	// "fmt"
 	"log"
 	"os"
 
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/domain"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/handler"
+	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/mqttbridge"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/repositories"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/router"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/socket"
@@ -14,9 +14,6 @@ import (
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/pkg/database"
 	initial "github.com/HanThamarat/SMART-CONTROL-BACKEND/pkg/initialize"
 	loadend "github.com/HanThamarat/SMART-CONTROL-BACKEND/pkg/loadEnd"
-
-	// mqttcon "github.com/HanThamarat/SMART-CONTROL-BACKEND/pkg/mqttCon"
-	// mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -40,19 +37,6 @@ func main() {
 	initial.UserInit(db)
 	initial.WidgetTypeInit(db)
 
-	// mqttClient := mqttcon.MqttConnection();
-
-	// topic := "smart/control"
-
-	// text := "Hello from Go!"
-	// token := mqttClient.Publish("smart/control", 0, false, text);
-	// token.Wait();
-
-	// tokenSub := mqttClient.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
-	// 	fmt.Printf("✅ Received message: %s from topic: %s\n", m.Payload(), m.Topic());
-	// });
-	// tokenSub.Wait();
-
 	// auth service
 	authRepo := repositories.NewGormAuthRepository(db)
 	authUc := usecase.NewAuthUsecase(authRepo)
@@ -64,6 +48,7 @@ func main() {
 	widgetHdl := handler.NewWidgetHandler(widgetUc)
 
 	socketServer := socket.NewServer()
+	mqttbridge.Setup(socketServer)
 
 	app := fiber.New()
 	app.Use(logger.New())

@@ -43,7 +43,7 @@ services:
       - "11883:1883"
       - "9001:9001"
     volumes:
-      - mqtt_volume.config:/mosquitto/config
+      - ./.docker/mosquitto/config:/mosquitto/config
       - mqtt_volume.data:/mosquitto/data
       - mqtt_volume.log:/mosquitto/log
     healthcheck:
