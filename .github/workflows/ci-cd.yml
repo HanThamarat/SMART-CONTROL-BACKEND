@@ -43,11 +43,6 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Install deploy tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rsync openssh-client
-
       - name: Prepare SSH key
         run: |
           mkdir -p ~/.ssh
@@ -63,13 +58,14 @@ jobs:
 
       - name: Sync project to server
         run: |
-          rsync -avzr --delete \
-            -e "ssh -p ${{ secrets.SERVER_PORT }}" \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude '.env' \
-            --exclude 'tmp' \
-            ./ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_APP_DIR }}/"
+          tar \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.env' \
+            --exclude='tmp' \
+            -czf - . | ssh -p "${{ secrets.SERVER_PORT }}" \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "cd '${{ secrets.SERVER_APP_DIR }}' && tar -xzf -"
 
       - name: Upload production env file
         run: |
