@@ -7,7 +7,7 @@ import (
 )
 
 type WidgetHandler struct {
-	usecase		domain.WidgetUsecase
+	usecase domain.WidgetUsecase
 }
 
 func NewWidgetHandler(u domain.WidgetUsecase) *WidgetHandler {
@@ -17,17 +17,17 @@ func NewWidgetHandler(u domain.WidgetUsecase) *WidgetHandler {
 }
 
 func (h *WidgetHandler) CreateNewWidget(c *fiber.Ctx) error {
-	var req domain.WidgetDTO;
+	var req domain.WidgetDTO
 	if err := c.BodyParser(&req); err != nil {
 		return response.SetErrResponse(
 			c,
 			fiber.StatusBadRequest,
 			"Create a new widget failed.",
 			err,
-		);
+		)
 	}
 
-	result, err := h.usecase.CreateNewWidget(req);
+	result, err := h.usecase.CreateNewWidget(req)
 
 	if err != nil {
 		return response.SetErrResponse(
@@ -35,7 +35,7 @@ func (h *WidgetHandler) CreateNewWidget(c *fiber.Ctx) error {
 			fiber.StatusBadRequest,
 			"Create a new widget failed.",
 			err,
-		);
+		)
 	}
 
 	return response.SetResponse(
@@ -43,11 +43,11 @@ func (h *WidgetHandler) CreateNewWidget(c *fiber.Ctx) error {
 		fiber.StatusCreated,
 		"Create a new widget successfully.",
 		result,
-	);
+	)
 }
 
 func (h *WidgetHandler) FindAllWidget(c *fiber.Ctx) error {
-	result, err := h.usecase.FindAllWidget();
+	result, err := h.usecase.FindAllWidget()
 
 	if err != nil {
 		return response.SetErrResponse(
@@ -55,7 +55,7 @@ func (h *WidgetHandler) FindAllWidget(c *fiber.Ctx) error {
 			fiber.StatusBadRequest,
 			"Find all widgets failed.",
 			err,
-		);
+		)
 	}
 
 	return response.SetResponse(
@@ -63,21 +63,21 @@ func (h *WidgetHandler) FindAllWidget(c *fiber.Ctx) error {
 		fiber.StatusOK,
 		"Find all widgets successfully.",
 		result,
-	); 
+	)
 }
 
 func (h *WidgetHandler) FindWidget(c *fiber.Ctx) error {
-	id, err := c.ParamsInt("id");
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return response.SetErrResponse(
 			c,
 			fiber.StatusBadRequest,
 			"Find widget by id failed.",
 			err,
-		);
+		)
 	}
 
-	result, err := h.usecase.FindWidget(id);
+	result, err := h.usecase.FindWidget(id)
 
 	if err != nil {
 		return response.SetErrResponse(
@@ -85,7 +85,7 @@ func (h *WidgetHandler) FindWidget(c *fiber.Ctx) error {
 			fiber.StatusBadRequest,
 			"Find widget by id failed.",
 			err,
-		);
+		)
 	}
 
 	return response.SetResponse(
@@ -93,31 +93,31 @@ func (h *WidgetHandler) FindWidget(c *fiber.Ctx) error {
 		fiber.StatusOK,
 		"Find widget by id successfully.",
 		result,
-	); 
+	)
 }
 
 func (h *WidgetHandler) UpdateWidget(c *fiber.Ctx) error {
-	id, err := c.ParamsInt("id");
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return response.SetErrResponse(
 			c,
 			fiber.StatusBadRequest,
 			"update widget failed.",
 			err,
-		);
+		)
 	}
 
-	var req domain.WidgetUpdateDTO;
+	var req domain.WidgetUpdateDTO
 	if err := c.BodyParser(&req); err != nil {
 		return response.SetErrResponse(
 			c,
 			fiber.StatusBadRequest,
 			"update widget failed.",
 			err,
-		);
+		)
 	}
 
-	result, err := h.usecase.UpdateWidget(id, req);
+	result, err := h.usecase.UpdateWidget(id, req)
 
 	if err != nil {
 		return response.SetErrResponse(
@@ -125,7 +125,7 @@ func (h *WidgetHandler) UpdateWidget(c *fiber.Ctx) error {
 			fiber.StatusBadRequest,
 			"update widget failed.",
 			err,
-		);
+		)
 	}
 
 	return response.SetResponse(
@@ -133,21 +133,21 @@ func (h *WidgetHandler) UpdateWidget(c *fiber.Ctx) error {
 		fiber.StatusOK,
 		"Widget updated.",
 		result,
-	); 
+	)
 }
 
 func (h *WidgetHandler) DeleteWidget(c *fiber.Ctx) error {
-	id, err := c.ParamsInt("id");
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return response.SetErrResponse(
 			c,
 			fiber.StatusBadRequest,
 			"Delete failed.",
 			err,
-		);
+		)
 	}
 
-	result, err := h.usecase.DeleteWidget(id);
+	result, err := h.usecase.DeleteWidget(id)
 
 	if err != nil {
 		return response.SetErrResponse(
@@ -155,7 +155,7 @@ func (h *WidgetHandler) DeleteWidget(c *fiber.Ctx) error {
 			fiber.StatusBadRequest,
 			"Delete failed.",
 			err,
-		);
+		)
 	}
 
 	return response.SetResponse(
@@ -163,6 +163,5 @@ func (h *WidgetHandler) DeleteWidget(c *fiber.Ctx) error {
 		fiber.StatusOK,
 		"Widget deleted.",
 		result,
-	); 
+	)
 }
-

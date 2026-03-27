@@ -37,8 +37,8 @@ func main() {
 		panic("Could not migrate database: " + err.Error())
 	}
 
-	initial.UserInit(db);
-	initial.WidgetTypeInit(db);
+	initial.UserInit(db)
+	initial.WidgetTypeInit(db)
 
 	// mqttClient := mqttcon.MqttConnection();
 
@@ -54,16 +54,16 @@ func main() {
 	// tokenSub.Wait();
 
 	// auth service
-	authRepo 	:= repositories.NewGormAuthRepository(db);
-	authUc 		:= usecase.NewAuthUsecase(authRepo)
-	authHdl 	:= handler.NewAuthHandler(authUc)
+	authRepo := repositories.NewGormAuthRepository(db)
+	authUc := usecase.NewAuthUsecase(authRepo)
+	authHdl := handler.NewAuthHandler(authUc)
 
 	// widget service
-	widgetRepo  := repositories.NewGormWidgetRepository(db);
-	widgetUc   	:= usecase.NewWidgetUsecase(widgetRepo);
-	widgetHdl	:= handler.NewWidgetHandler(widgetUc);
+	widgetRepo := repositories.NewGormWidgetRepository(db)
+	widgetUc := usecase.NewWidgetUsecase(widgetRepo)
+	widgetHdl := handler.NewWidgetHandler(widgetUc)
 
-	socketServer := socket.NewServer();
+	socketServer := socket.NewServer()
 
 	app := fiber.New()
 	app.Use(logger.New())

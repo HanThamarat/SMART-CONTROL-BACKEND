@@ -11,10 +11,10 @@ import (
 )
 
 type UserClaims struct {
-	UserId uint `json:"userId"`
+	UserId uint   `json:"userId"`
 	Name   string `json:"name"`
 	Email  string `json:"email"`
-	Status bool `json:"status"`
+	Status bool   `json:"status"`
 	jwt.StandardClaims
 }
 
