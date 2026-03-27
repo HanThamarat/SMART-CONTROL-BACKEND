@@ -17,17 +17,17 @@ func NewAuthHandler(uc domain.AuthUsecase) *AuthHandler {
 }
 
 func (h *AuthHandler) CredentialAuth(c *fiber.Ctx) error {
-	var req domain.AuthDTO;
+	var req domain.AuthDTO
 	if err := c.BodyParser(&req); err != nil {
 		return response.SetErrResponse(
 			c,
 			fiber.StatusBadRequest,
 			"Authentication failed.",
 			err.Error(),
-		);
+		)
 	}
 
-	result, err := h.usecase.CredentialAuth(req);
+	result, err := h.usecase.CredentialAuth(req)
 
 	if err != nil {
 		return response.SetResponse(
@@ -35,7 +35,7 @@ func (h *AuthHandler) CredentialAuth(c *fiber.Ctx) error {
 			fiber.StatusBadRequest,
 			"Authentication failed.",
 			err.Error(),
-		);
+		)
 	}
 
 	return response.SetResponse(
@@ -43,5 +43,5 @@ func (h *AuthHandler) CredentialAuth(c *fiber.Ctx) error {
 		fiber.StatusOK,
 		"Authentication successfully.",
 		result,
-	);
+	)
 }

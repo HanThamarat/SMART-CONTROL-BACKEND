@@ -11,5 +11,5 @@ func NewAuthUsecase(r domain.AuthRepository) domain.AuthUsecase {
 }
 
 func (u *authUsecase) CredentialAuth(dto domain.AuthDTO) (*domain.AuthResponse, error) {
-	return u.repo.CredentialAuth(dto);
+	return u.repo.CredentialAuth(dto)
 }
