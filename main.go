@@ -9,6 +9,7 @@ import (
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/handler"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/repositories"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/router"
+	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/socket"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/internal/usecase"
 	"github.com/HanThamarat/SMART-CONTROL-BACKEND/pkg/database"
 	initial "github.com/HanThamarat/SMART-CONTROL-BACKEND/pkg/initialize"
@@ -21,21 +22,23 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
-
 func main() {
-	loadend.LoadEnv();
+	loadend.LoadEnv()
 
-	db := database.InitDB();
+	db := database.InitDB()
 
 	err := db.AutoMigrate(
 		&domain.User{},
-	);
+		&domain.WidgetType{},
+		&domain.Widget{},
+	)
 
 	if err != nil {
-		panic("Could not migrate database: " + err.Error());
+		panic("Could not migrate database: " + err.Error())
 	}
 
 	initial.UserInit(db);
+	initial.WidgetTypeInit(db);
 
 	// mqttClient := mqttcon.MqttConnection();
 
@@ -50,23 +53,33 @@ func main() {
 	// });
 	// tokenSub.Wait();
 
+	// auth service
 	authRepo 	:= repositories.NewGormAuthRepository(db);
-	authUc 		:= usecase.NewAuthUsecase(authRepo);
-	authHdl 	:= handler.NewAuthHandler(authUc);
+	authUc 		:= usecase.NewAuthUsecase(authRepo)
+	authHdl 	:= handler.NewAuthHandler(authUc)
 
-	app := fiber.New();
-	app.Use(logger.New());
+	// widget service
+	widgetRepo  := repositories.NewGormWidgetRepository(db);
+	widgetUc   	:= usecase.NewWidgetUsecase(widgetRepo);
+	widgetHdl	:= handler.NewWidgetHandler(widgetUc);
+
+	socketServer := socket.NewServer();
+
+	app := fiber.New()
+	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:  "*",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
-		AllowMethods: "GET, POST, HEAD, PUT, DELETE, PATCH",
+		AllowOrigins:     "*",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET, POST, HEAD, PUT, DELETE, PATCH",
 		AllowCredentials: false,
-	}));
+	}))
 
 	router.SetupRoutes(
 		app,
 		authHdl,
-	);
+		widgetHdl,
+		socketServer,
+	)
 
-	log.Fatal(app.Listen(os.Getenv("Port")));
+	log.Fatal(app.Listen(os.Getenv("Port")))
 }
