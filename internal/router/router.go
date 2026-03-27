@@ -13,21 +13,30 @@ import (
 func SetupRoutes(
 	app *fiber.App,
 	authHdl *handler.AuthHandler,
+	widgetHdl *handler.WidgetHandler,
 	socketServer *socket.Server,
 ) {
 	app.Get("/", func(c *fiber.Ctx) error {
 		return response.SetResponse(c, fiber.StatusOK, "Server is running.", nil)
-	})
+	});
 
-	app.Use("/socket.io", socketServer.Upgrade)
-	app.Get("/socket.io", socketServer.Handler())
+	app.Use("/socket.io", socketServer.Upgrade);
+	app.Get("/socket.io", socketServer.Handler());
 
-	router := app.Group("/api/v1")
 
-	authService := router.Group("/auth_service")
-	authService.Post("/credential", authHdl.CredentialAuth)
+	router := app.Group("/api/v1");
+
+	authService := router.Group("/auth_service");
+	authService.Post("/credential", authHdl.CredentialAuth);
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: []byte(os.Getenv("JWT_SECRET")),
-	}))
+	}));
+	
+	widgetService := router.Group("/widget_service");
+	widgetService.Post("/create", widgetHdl.CreateNewWidget);
+	widgetService.Get("/finds", widgetHdl.FindAllWidget);
+	widgetService.Get("/find/:id", widgetHdl.FindWidget);
+	widgetService.Put("/update/:id", widgetHdl.UpdateWidget);
+	widgetService.Delete("/delete/:id", widgetHdl.DeleteWidget);
 }

@@ -29,13 +29,16 @@ func main() {
 
 	err := db.AutoMigrate(
 		&domain.User{},
+		&domain.WidgetType{},
+		&domain.Widget{},
 	)
 
 	if err != nil {
 		panic("Could not migrate database: " + err.Error())
 	}
 
-	initial.UserInit(db)
+	initial.UserInit(db);
+	initial.WidgetTypeInit(db);
 
 	// mqttClient := mqttcon.MqttConnection();
 
@@ -50,10 +53,17 @@ func main() {
 	// });
 	// tokenSub.Wait();
 
-	authRepo := repositories.NewGormAuthRepository(db)
-	authUc := usecase.NewAuthUsecase(authRepo)
-	authHdl := handler.NewAuthHandler(authUc)
-	socketServer := socket.NewServer()
+	// auth service
+	authRepo 	:= repositories.NewGormAuthRepository(db);
+	authUc 		:= usecase.NewAuthUsecase(authRepo)
+	authHdl 	:= handler.NewAuthHandler(authUc)
+
+	// widget service
+	widgetRepo  := repositories.NewGormWidgetRepository(db);
+	widgetUc   	:= usecase.NewWidgetUsecase(widgetRepo);
+	widgetHdl	:= handler.NewWidgetHandler(widgetUc);
+
+	socketServer := socket.NewServer();
 
 	app := fiber.New()
 	app.Use(logger.New())
@@ -67,6 +77,7 @@ func main() {
 	router.SetupRoutes(
 		app,
 		authHdl,
+		widgetHdl,
 		socketServer,
 	)
 
