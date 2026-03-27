@@ -77,4 +77,4 @@ jobs:
         run: |
           ssh -p "${{ secrets.SERVER_PORT }}" \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "cd '${{ secrets.SERVER_APP_DIR }}' && docker compose -f docker-compose.prod.yaml up -d --build --remove-orphans"
+            "cd '${{ secrets.SERVER_APP_DIR }}' && sudo docker compose -f docker-compose.prod.yaml up -d --build --remove-orphans"
