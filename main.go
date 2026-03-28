@@ -46,9 +46,9 @@ func main() {
 	widgetRepo := repositories.NewGormWidgetRepository(db)
 	widgetUc := usecase.NewWidgetUsecase(widgetRepo)
 	widgetHdl := handler.NewWidgetHandler(widgetUc)
-
-	socketServer := socket.NewServer()
-	mqttbridge.Setup(socketServer)
+	
+	socketServer := socket.NewServer();
+	mqttbridge.Setup(socketServer, db);
 
 	app := fiber.New()
 	app.Use(logger.New())
