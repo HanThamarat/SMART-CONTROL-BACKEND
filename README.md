@@ -80,10 +80,10 @@ MQTT_USERNAME=smartcontrol
 MQTT_PASSWORD=123456
 MQTT_SUBSCRIBE_TOPICS=TEST/MQTT
 
-EMAIL=HanThamarat@gmail.com
-NAME=HanThamarat
-USERNAME=HanThamarat
-PASSWORD=123456
+EMAIL=admin@gmail.com
+NAME=Administrator
+USERNAME=admin
+PASSWORD=12345678
 ```
 
 Important notes:
