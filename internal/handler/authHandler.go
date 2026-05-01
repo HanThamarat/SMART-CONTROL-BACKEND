@@ -30,7 +30,7 @@ func (h *AuthHandler) CredentialAuth(c *fiber.Ctx) error {
 	result, err := h.usecase.CredentialAuth(req)
 
 	if err != nil {
-		return response.SetResponse(
+		return response.SetErrResponse(
 			c,
 			fiber.StatusBadRequest,
 			"Authentication failed.",

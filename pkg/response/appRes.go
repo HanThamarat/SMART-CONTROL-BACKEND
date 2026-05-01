@@ -15,7 +15,7 @@ type ErrResponseType struct {
 }
 
 func SetResponse(c *fiber.Ctx, status int, message string, body any) error {
-	return c.JSON(ResponseType{
+	return c.Status(status).JSON(ResponseType{
 		Status:  status,
 		Message: message,
 		Body:    body,
@@ -23,7 +23,7 @@ func SetResponse(c *fiber.Ctx, status int, message string, body any) error {
 }
 
 func SetErrResponse(c *fiber.Ctx, status int, message string, err any) error {
-	return c.JSON(ErrResponseType{
+	return c.Status(status).JSON(ErrResponseType{
 		Status:  status,
 		Message: message,
 		Error:   err,
